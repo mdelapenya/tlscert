@@ -9,7 +9,7 @@ import (
 	"github.com/mdelapenya/tlscert"
 )
 
-func TestGenerate(t *testing.T) {
+func TestSelfSigned(t *testing.T) {
 	t.Run("No host returns error", func(t *testing.T) {
 		cert := tlscert.SelfSignedFromRequest(tlscert.Request{Host: ""})
 		if cert != nil {
