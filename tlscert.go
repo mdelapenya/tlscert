@@ -130,6 +130,16 @@ func SelfSigned(host string) *Certificate {
 	return SelfSignedFromRequest(req)
 }
 
+// SelfSignedCA Generate a self-signed X.509 certificate for a Certificate Authority.
+// This function is a wrapper around SelfSigned, with the IsCA option set to true.
+func SelfSignedCA(host string) *Certificate {
+	req := NewRequest(host)
+
+	req.IsCA = true
+
+	return SelfSignedFromRequest(req)
+}
+
 // SelfSignedFromRequest Generate a self-signed X.509 certificate for a TLS server,
 // using the provided CertRequest.
 func SelfSignedFromRequest(req Request) *Certificate {

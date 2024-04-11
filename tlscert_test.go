@@ -93,10 +93,7 @@ func TestGenerate(t *testing.T) {
 	})
 
 	t.Run("As CA", func(t *testing.T) {
-		cert := tlscert.SelfSignedFromRequest(tlscert.Request{
-			Host: "localhost",
-			IsCA: true,
-		})
+		cert := tlscert.SelfSignedCA("localhost")
 		if cert == nil {
 			t.Fatal("expected cert to be not nil, got", cert)
 		}
