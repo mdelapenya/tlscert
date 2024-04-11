@@ -22,17 +22,23 @@ const defaultValidFor time.Duration = 365 * 24 * time.Hour
 // around the x509.Certificate and rsa.PrivateKey types, and includes the raw
 // bytes of the certificate and private key.
 type Certificate struct {
-	Cert     *x509.Certificate
-	Bytes    []byte
-	Key      *rsa.PrivateKey
-	KeyBytes []byte
-	CertPath string
-	KeyPath  string
+	Cert      *x509.Certificate
+	Bytes     []byte
+	Key       *rsa.PrivateKey
+	KeyBytes  []byte
+	CertPath  string
+	KeyPath   string
+	tlsConfig *tls.Config
 }
 
 // TLSConfig returns a tls.Config that uses the certificate as the root CA,
-// and the certificate for the server's certificate.
+// and the certificate for the server's certificate. This method will cache
+// the tls.Config for future calls.
 func (c *Certificate) TLSConfig() *tls.Config {
+	if c.tlsConfig != nil {
+		return c.tlsConfig
+	}
+
 	caCertPool := x509.NewCertPool()
 	caCertPool.AddCert(c.Cert)
 
@@ -41,10 +47,14 @@ func (c *Certificate) TLSConfig() *tls.Config {
 		return nil
 	}
 
-	return &tls.Config{
+	cfg := &tls.Config{
 		Certificates: []tls.Certificate{tlsCert},
 		RootCAs:      caCertPool,
 	}
+
+	c.tlsConfig = cfg
+
+	return cfg
 }
 
 // Transport returns an http.Transport that uses the certificate as the root CA.
