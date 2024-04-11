@@ -3,11 +3,13 @@ package tlscert
 import (
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"math/big"
 	"net"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -26,6 +28,20 @@ type Certificate struct {
 	KeyBytes []byte
 	CertPath string
 	KeyPath  string
+}
+
+// Transport returns an http.Transport that uses the certificate as the root CA.
+func (c *Certificate) Transport() *http.Transport {
+	caCertPool := x509.NewCertPool()
+	caCertPool.AddCert(c.Cert)
+
+	tlsConfig := &tls.Config{
+		RootCAs: caCertPool,
+	}
+
+	return &http.Transport{
+		TLSClientConfig: tlsConfig,
+	}
 }
 
 // Request represents a request to generate a self-signed X.509 certificate.

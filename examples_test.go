@@ -1,8 +1,6 @@
 package tlscert_test
 
 import (
-	"crypto/tls"
-	"crypto/x509"
 	"fmt"
 	"io"
 	"log"
@@ -64,20 +62,9 @@ func ExampleSelfSigned() {
 
 	// perform an HTTP request to the server, using the generated certificate
 
-	caCertPool := x509.NewCertPool()
-	caCertPool.AddCert(cert.Cert)
-
-	tlsConfig := &tls.Config{
-		RootCAs: caCertPool,
-	}
-
-	tr := &http.Transport{
-		TLSClientConfig: tlsConfig,
-	}
-
 	const url = "https://localhost:8443/hello"
 
-	client := &http.Client{Transport: tr}
+	client := &http.Client{Transport: cert.Transport()}
 	resp, err := client.Get(url)
 	if err != nil {
 		log.Fatalf("Failed to get response: %v", err)
