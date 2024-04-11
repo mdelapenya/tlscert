@@ -227,3 +227,26 @@ func TestSelfSigned(t *testing.T) {
 		}
 	})
 }
+
+func TestTLSConfig(t *testing.T) {
+	t.Run("Cached", func(t *testing.T) {
+		cert := tlscert.SelfSigned("localhost")
+		if cert == nil {
+			t.Fatal("expected cert to be not nil, got", cert)
+		}
+
+		config := cert.TLSConfig()
+		if config == nil {
+			t.Fatal("expected config to be not nil, got", config)
+		}
+
+		// force the bytes to be null, but the config should not change
+		cert.Bytes = nil
+
+		config2 := cert.TLSConfig()
+
+		if config != config2 {
+			t.Fatal("expected config to be the same, got different")
+		}
+	})
+}
