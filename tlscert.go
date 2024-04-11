@@ -62,8 +62,8 @@ type Request struct {
 	// set to the common name of the parent certificate.
 	Parent *Certificate
 
-	// SaveToFile sets the directory to save the certificate and private key.
-	SaveToFile string
+	// ParentDir sets the directory to save the certificate and private key.
+	ParentDir string
 }
 
 // NewRequest returns a new CertRequest with default values to avoid nil pointers.
@@ -182,9 +182,9 @@ func SelfSignedFromRequest(req Request) *Certificate {
 		Bytes: x509.MarshalPKCS1PrivateKey(pk),
 	})
 
-	if req.SaveToFile != "" {
+	if req.ParentDir != "" {
 		id := sanitiseName(req.Name)
-		certPath := filepath.Join(req.SaveToFile, "cert-"+id+".pem")
+		certPath := filepath.Join(req.ParentDir, "cert-"+id+".pem")
 
 		if err := os.WriteFile(certPath, certificate.Bytes, 0o644); err != nil {
 			return certificate
@@ -192,7 +192,7 @@ func SelfSignedFromRequest(req Request) *Certificate {
 		certificate.CertPath = certPath
 
 		if certificate.KeyBytes != nil {
-			keyPath := filepath.Join(req.SaveToFile, "key-"+id+".pem")
+			keyPath := filepath.Join(req.ParentDir, "key-"+id+".pem")
 			if err := os.WriteFile(keyPath, certificate.KeyBytes, 0o644); err != nil {
 				return certificate
 			}

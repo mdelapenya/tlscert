@@ -24,19 +24,19 @@ func ExampleSelfSigned() {
 	// Generate a certificate for localhost and save it to disk.
 	// There is no need to pass the AsPem option: the SaveToFile option will automatically save the certificate as PEM.
 	caCert := tlscert.SelfSignedFromRequest(tlscert.Request{
-		Host:       "localhost",
-		Name:       "ca-cert",
-		SaveToFile: certsDir,
+		Host:      "localhost",
+		Name:      "ca-cert",
+		ParentDir: certsDir,
 	})
 	if caCert == nil {
 		log.Fatal("Failed to generate CA certificate")
 	}
 
 	cert := tlscert.SelfSignedFromRequest(tlscert.Request{
-		Host:       "localhost",
-		Name:       "client-cert",
-		Parent:     caCert,
-		SaveToFile: certsDir,
+		Host:      "localhost",
+		Name:      "client-cert",
+		Parent:    caCert,
+		ParentDir: certsDir,
 	})
 	if cert == nil {
 		log.Fatal("Failed to generate certificate")

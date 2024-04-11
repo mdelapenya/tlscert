@@ -195,8 +195,8 @@ func TestGenerate(t *testing.T) {
 		tmp := tt.TempDir()
 
 		cert := tlscert.SelfSignedFromRequest(tlscert.Request{
-			Host:       "localhost",
-			SaveToFile: tmp,
+			Host:      "localhost",
+			ParentDir: tmp,
 		})
 		if cert == nil {
 			t.Fatal("expected cert to be not nil, got", cert)
