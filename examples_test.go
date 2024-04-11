@@ -17,8 +17,8 @@ func ExampleSelfSigned() {
 	certsDir := tmp + "/certs"
 	defer os.RemoveAll(certsDir)
 
-	if err := os.MkdirAll(certsDir, 0755); err != nil {
-		log.Fatal(err)
+	if err := os.MkdirAll(certsDir, 0o755); err != nil {
+		log.Fatal(err) // nolint: gocritic
 	}
 
 	// Generate a certificate for localhost and save it to disk.
@@ -51,7 +51,10 @@ func ExampleSelfSigned() {
 
 	server.Handler = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "text/plain")
-		w.Write([]byte("TLS works!\n"))
+		_, err := w.Write([]byte("TLS works!\n"))
+		if err != nil {
+			log.Printf("Failed to write response: %v", err)
+		}
 	})
 
 	go func() {
@@ -90,5 +93,4 @@ func ExampleSelfSigned() {
 
 	// Output:
 	// TLS works!
-
 }
