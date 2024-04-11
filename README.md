@@ -21,7 +21,7 @@ Therefore, it's possible to issue a self-signed certificate with a custom host n
 
 The `Request` struct also provides a `ParentDir` option that can be used to save the generated certificate to disk as a PEM file.
 
-The `Certificate` struct provides a `Transport` method, which returns a pointer to a `http.Transport` that can be used to perform HTTP requests using the generated certificate.
+The `Certificate` struct provides a `Transport` method, which returns a pointer to a `http.Transport` that can be used to perform HTTP requests using the generated certificate; and a `TLSConfig` method, which returns a pointer to a `tls.Config`. The `Transport` method internally uses the `TLSConfig` method.
 
 ## Example
 

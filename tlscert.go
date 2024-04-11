@@ -30,14 +30,26 @@ type Certificate struct {
 	KeyPath  string
 }
 
-// Transport returns an http.Transport that uses the certificate as the root CA.
-func (c *Certificate) Transport() *http.Transport {
+// TLSConfig returns a tls.Config that uses the certificate as the root CA,
+// and the certificate for the server's certificate.
+func (c *Certificate) TLSConfig() *tls.Config {
 	caCertPool := x509.NewCertPool()
 	caCertPool.AddCert(c.Cert)
 
-	tlsConfig := &tls.Config{
-		RootCAs: caCertPool,
+	tlsCert, err := tls.X509KeyPair(c.Bytes, c.KeyBytes)
+	if err != nil {
+		return nil
 	}
+
+	return &tls.Config{
+		Certificates: []tls.Certificate{tlsCert},
+		RootCAs:      caCertPool,
+	}
+}
+
+// Transport returns an http.Transport that uses the certificate as the root CA.
+func (c *Certificate) Transport() *http.Transport {
+	tlsConfig := c.TLSConfig()
 
 	return &http.Transport{
 		TLSClientConfig: tlsConfig,
