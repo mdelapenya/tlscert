@@ -31,8 +31,6 @@ You can find a simple example in the [example_test.go](example_test.go) file:
 package tlscert_test
 
 import (
-	"crypto/tls"
-	"crypto/x509"
 	"fmt"
 	"io"
 	"log"
@@ -47,8 +45,8 @@ func ExampleSelfSigned() {
 	certsDir := tmp + "/certs"
 	defer os.RemoveAll(certsDir)
 
-	if err := os.MkdirAll(certsDir, 0755); err != nil {
-		log.Fatal(err)
+	if err := os.MkdirAll(certsDir, 0o755); err != nil {
+		log.Fatal(err) // nolint: gocritic
 	}
 
 	// Generate a certificate for localhost and save it to disk.
@@ -81,7 +79,10 @@ func ExampleSelfSigned() {
 
 	server.Handler = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "text/plain")
-		w.Write([]byte("TLS works!\n"))
+		_, err := w.Write([]byte("TLS works!\n"))
+		if err != nil {
+			log.Printf("Failed to write response: %v", err)
+		}
 	})
 
 	go func() {
@@ -91,20 +92,9 @@ func ExampleSelfSigned() {
 
 	// perform an HTTP request to the server, using the generated certificate
 
-	caCertPool := x509.NewCertPool()
-	caCertPool.AddCert(cert.Cert)
-
-	tlsConfig := &tls.Config{
-		RootCAs: caCertPool,
-	}
-
-	tr := &http.Transport{
-		TLSClientConfig: tlsConfig,
-	}
-
 	const url = "https://localhost:8443/hello"
 
-	client := &http.Client{Transport: tr}
+	client := &http.Client{Transport: cert.Transport()}
 	resp, err := client.Get(url)
 	if err != nil {
 		log.Fatalf("Failed to get response: %v", err)
@@ -120,6 +110,5 @@ func ExampleSelfSigned() {
 
 	// Output:
 	// TLS works!
-
 }
 ```
