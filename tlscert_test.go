@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/mdelapenya/tlscert"
@@ -477,6 +478,21 @@ func TestSelfSignedE(t *testing.T) {
 			if string(cert) != string(fileCert.Certificate[i]) {
 				tt.Fatalf("expected certificate to be %s, got %s\n", string(cert), string(fileCert.Certificate[i]))
 			}
+		}
+	})
+
+	t.Run("save-to-file/error", func(tt *testing.T) {
+		tmp := filepath.Join(tt.TempDir(), "non-existing-dir")
+
+		cert, err := tlscert.SelfSignedFromRequestE(tlscert.Request{
+			Host:      "localhost",
+			ParentDir: tmp,
+		})
+		if err == nil {
+			t.Fatal("expected error, got nil")
+		}
+		if cert != nil {
+			t.Fatal("expected cert to be nil, got", cert)
 		}
 	})
 }

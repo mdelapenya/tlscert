@@ -276,14 +276,14 @@ func SelfSignedFromRequestE(req Request) (*Certificate, error) {
 		certPath := filepath.Join(req.ParentDir, "cert-"+id+".pem")
 
 		if err := os.WriteFile(certPath, certificate.Bytes, 0o644); err != nil {
-			return certificate, fmt.Errorf("write certificate to file: %w", err)
+			return nil, fmt.Errorf("write certificate to file: %w", err)
 		}
 		certificate.CertPath = certPath
 
 		if certificate.KeyBytes != nil {
 			keyPath := filepath.Join(req.ParentDir, "key-"+id+".pem")
 			if err := os.WriteFile(keyPath, certificate.KeyBytes, 0o644); err != nil {
-				return certificate, fmt.Errorf("write key to file: %w", err)
+				return nil, fmt.Errorf("write key to file: %w", err)
 			}
 			certificate.KeyPath = keyPath
 		}
