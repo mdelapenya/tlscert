@@ -10,12 +10,24 @@ I many times found myself needing to generate a self-signed certificate for test
 
 ## Features
 
-The package exposes two functions and two types: `SelfSigned` and `SelfSignedFromRequest`, and `Request` and `Certificate`.
+The package exposes the following types and functions:
 
-- The `Request` type is used to specify the parameters for the certificate generation.
-- The `Certificate` type is used to store the generated certificate and key, including the paths to the files on disk.
-- The `SelfSigned` function generates a self-signed certificate and returns it as a `Certificate` value. This function only receives the host name for the certificate.
-- The `SelfSignedFromRequest` function generates a self-signed certificate based on the parameters in a `Request` value.
+### Types
+
+- `Request`: A struct that contains the parameters for the certificate generation.
+- `Certificate`: A struct that contains the generated certificate and key, including the paths to the files on disk.
+
+### Functions
+
+- `SelfSigned`: A function that generates a self-signed certificate and returns it as a `Certificate` value. This function only receives the host name for the certificate, and it does not return an error, if it occurs.
+- `SelfSignedCA`: A function that generates a self-signed certificate for a Certificate Authority, and it does not return an error, if it occurs.
+- `SelfSignedFromRequest`: A function that generates a self-signed certificate based on the parameters in a `Request` value, and it does not return an error, if it occurs.
+
+All three functions have an `E` version that returns an error, if it occurs:
+
+- `SelfSignedE`: A function that generates a self-signed certificate and returns it as a `Certificate` value. This function only receives the host name for the certificate, and it does return an error, if it occurs.
+- `SelfSignedCAE`: A function that generates a self-signed certificate for a Certificate Authority, and it does return an error, if it occurs.
+- `SelfSignedFromRequestE`: A function that generates a self-signed certificate based on the parameters in a `Request` value, and it does return an error, if it occurs.
 
 Therefore, it's possible to issue a self-signed certificate with a custom host name, and save it to disk, if needed, or to issue a certificate based on a parent certificate, which is useful for generating client certificates.
 
@@ -65,6 +77,87 @@ func ExampleSelfSigned() {
 		Parent:    caCert,
 		ParentDir: certsDir,
 	})
+	if cert == nil {
+		log.Fatal("Failed to generate certificate")
+	}
+
+	// create an http server that uses the generated certificate
+	// and private key to serve requests over HTTPS
+
+	server := &http.Server{
+		Addr: ":8443",
+	}
+
+	server.Handler = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		w.Header().Set("Content-Type", "text/plain")
+		_, err := w.Write([]byte("TLS works!\n"))
+		if err != nil {
+			log.Printf("Failed to write response: %v", err)
+		}
+	})
+
+	go func() {
+		_ = server.ListenAndServeTLS(cert.CertPath, cert.KeyPath)
+	}()
+	defer server.Close()
+
+	// perform an HTTP request to the server, using the generated certificate
+
+	const url = "https://localhost:8443/hello"
+
+	client := &http.Client{Transport: cert.Transport()}
+	resp, err := client.Get(url)
+	if err != nil {
+		log.Fatalf("Failed to get response: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatalf("Failed to read response body: %v", err)
+	}
+
+	fmt.Println(string(body))
+
+	// Output:
+	// TLS works!
+}
+```
+
+Or, if you prefer, you can use the `E` versions of the functions:
+
+```go
+func ExampleSelfSignedE() {
+	tmp := os.TempDir()
+	certsDir := tmp + "/certs"
+	defer os.RemoveAll(certsDir)
+
+	if err := os.MkdirAll(certsDir, 0o755); err != nil {
+		log.Fatal(err) // nolint: gocritic
+	}
+
+	// Generate a certificate for localhost and save it to disk.
+	caCert, err := tlscert.SelfSignedFromRequestE(tlscert.Request{
+		Host:      "localhost",
+		Name:      "ca-cert",
+		ParentDir: certsDir,
+	})
+	if err != nil {
+		log.Fatal("Failed to generate CA certificate")
+	}
+	if caCert == nil {
+		log.Fatal("Failed to generate CA certificate")
+	}
+
+	cert, err := tlscert.SelfSignedFromRequestE(tlscert.Request{
+		Host:      "localhost",
+		Name:      "client-cert",
+		Parent:    caCert,
+		ParentDir: certsDir,
+	})
+	if err != nil {
+		log.Fatal("Failed to generate certificate")
+	}
 	if cert == nil {
 		log.Fatal("Failed to generate certificate")
 	}
