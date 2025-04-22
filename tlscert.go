@@ -7,6 +7,7 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
+	"fmt"
 	"math/big"
 	"net"
 	"net/http"
@@ -125,28 +126,68 @@ func NewRequest(host string) Request {
 //   - will be saved to the directory set in the WithSaveToFile option. Else, it will not be saved to disk.
 //   - will be its own Certificate Authority if the AsCA option is set. Else, it will not be a CA.
 func SelfSigned(host string) *Certificate {
+	cert, err := SelfSignedE(host)
+	if err != nil {
+		return nil
+	}
+
+	return cert
+}
+
+// SelfSignedE Generate a self-signed X.509 certificate for a TLS server. Returns
+// a struct containing the certificate and private key, as well as the raw bytes
+// for both of them, and an error. The raw bytes will be PEM-encoded.
+// Considerations for the generated certificate are as follows:
+//   - will be valid for the duration set in the ValidFor option, starting from 1 minute ago. Else, it will be valid for 1 year.
+//   - will be signed by the parent certificate if the WithParent option is set. Else, it will be self-signed.
+//   - will be saved to the directory set in the WithSaveToFile option. Else, it will not be saved to disk.
+//   - will be its own Certificate Authority if the AsCA option is set. Else, it will not be a CA.
+func SelfSignedE(host string) (*Certificate, error) {
 	req := NewRequest(host)
 
-	return SelfSignedFromRequest(req)
+	return SelfSignedFromRequestE(req)
 }
 
 // SelfSignedCA Generate a self-signed X.509 certificate for a Certificate Authority.
 // This function is a wrapper around SelfSigned, with the IsCA option set to true.
 func SelfSignedCA(host string) *Certificate {
+	cert, err := SelfSignedCAE(host)
+	if err != nil {
+		return nil
+	}
+
+	return cert
+}
+
+// SelfSignedCAE Generate a self-signed X.509 certificate for a Certificate Authority,
+// and an error. This function is a wrapper around SelfSignedFromRequest, with the
+// IsCA option set to true.
+func SelfSignedCAE(host string) (*Certificate, error) {
 	req := NewRequest(host)
 
 	req.IsCA = true
 
-	return SelfSignedFromRequest(req)
+	return SelfSignedFromRequestE(req)
 }
 
 // SelfSignedFromRequest Generate a self-signed X.509 certificate for a TLS server,
 // using the provided CertRequest.
 func SelfSignedFromRequest(req Request) *Certificate {
+	cert, err := SelfSignedFromRequestE(req)
+	if err != nil {
+		return nil
+	}
+
+	return cert
+}
+
+// SelfSignedFromRequestE Generate a self-signed X.509 certificate for a TLS server,
+// using the provided CertRequest. Returns an error if the certificate cannot be generated.
+func SelfSignedFromRequestE(req Request) (*Certificate, error) {
 	var certificate *Certificate
 
 	if len(req.Host) == 0 {
-		return nil
+		return nil, ErrHostRequired
 	}
 
 	if req.ValidFor == 0 {
@@ -192,7 +233,7 @@ func SelfSignedFromRequest(req Request) *Certificate {
 
 	pk, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
-		return nil
+		return nil, fmt.Errorf("generate key: %w", err)
 	}
 
 	if req.Parent == nil {
@@ -208,12 +249,12 @@ func SelfSignedFromRequest(req Request) *Certificate {
 
 	certBytes, err := x509.CreateCertificate(rand.Reader, &template, req.Parent.Cert, pk.Public(), req.Parent.Key)
 	if err != nil {
-		return nil
+		return nil, fmt.Errorf("create x509 certificate: %w", err)
 	}
 
 	cert, err := x509.ParseCertificate(certBytes)
 	if err != nil {
-		return nil
+		return nil, fmt.Errorf("parse x509 certificate: %w", err)
 	}
 
 	certificate = &Certificate{
@@ -235,20 +276,20 @@ func SelfSignedFromRequest(req Request) *Certificate {
 		certPath := filepath.Join(req.ParentDir, "cert-"+id+".pem")
 
 		if err := os.WriteFile(certPath, certificate.Bytes, 0o644); err != nil {
-			return certificate
+			return certificate, fmt.Errorf("write certificate to file: %w", err)
 		}
 		certificate.CertPath = certPath
 
 		if certificate.KeyBytes != nil {
 			keyPath := filepath.Join(req.ParentDir, "key-"+id+".pem")
 			if err := os.WriteFile(keyPath, certificate.KeyBytes, 0o644); err != nil {
-				return certificate
+				return certificate, fmt.Errorf("write key to file: %w", err)
 			}
 			certificate.KeyPath = keyPath
 		}
 	}
 
-	return certificate
+	return certificate, nil
 }
 
 // santiiseName returns a sanitised version of the name, replacing spaces with underscores.
