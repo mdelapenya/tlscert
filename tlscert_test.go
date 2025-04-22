@@ -522,7 +522,7 @@ func TestTLSConfig(t *testing.T) {
 	t.Run("cached/error", func(t *testing.T) {
 		cert, err := tlscert.SelfSignedE("")
 		if err == nil {
-			t.Fatal("expected error to be nil, got", err)
+			t.Fatal("expected error, got nil")
 		}
 		if cert != nil {
 			t.Fatal("expected cert to be nil, got", cert)
