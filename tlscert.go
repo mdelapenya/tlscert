@@ -17,7 +17,13 @@ import (
 	"time"
 )
 
-const defaultValidFor time.Duration = 365 * 24 * time.Hour
+const (
+	defaultValidFor   time.Duration = 365 * 24 * time.Hour
+	defaultRSAKeySize               = 2048
+	defaultFileMode                 = 0o644
+	certificateType                 = "CERTIFICATE"
+	privateKeyType                  = "RSA PRIVATE KEY"
+)
 
 // Certificate represents a certificate and private key pair. It's a wrapper
 // around the x509.Certificate and rsa.PrivateKey types, and includes the raw
@@ -231,7 +237,7 @@ func SelfSignedFromRequestE(req Request) (*Certificate, error) {
 		}
 	}
 
-	pk, err := rsa.GenerateKey(rand.Reader, 2048)
+	pk, err := rsa.GenerateKey(rand.Reader, defaultRSAKeySize)
 	if err != nil {
 		return nil, fmt.Errorf("generate key: %w", err)
 	}
@@ -263,11 +269,11 @@ func SelfSignedFromRequestE(req Request) (*Certificate, error) {
 	}
 
 	certificate.Bytes = pem.EncodeToMemory(&pem.Block{
-		Type:  "CERTIFICATE",
+		Type:  certificateType,
 		Bytes: certBytes,
 	})
 	certificate.KeyBytes = pem.EncodeToMemory(&pem.Block{
-		Type:  "RSA PRIVATE KEY",
+		Type:  privateKeyType,
 		Bytes: x509.MarshalPKCS1PrivateKey(pk),
 	})
 
@@ -275,14 +281,14 @@ func SelfSignedFromRequestE(req Request) (*Certificate, error) {
 		id := sanitiseName(req.Name)
 		certPath := filepath.Join(req.ParentDir, "cert-"+id+".pem")
 
-		if err := os.WriteFile(certPath, certificate.Bytes, 0o644); err != nil {
+		if err := os.WriteFile(certPath, certificate.Bytes, defaultFileMode); err != nil {
 			return nil, fmt.Errorf("write certificate to file: %w", err)
 		}
 		certificate.CertPath = certPath
 
 		if certificate.KeyBytes != nil {
 			keyPath := filepath.Join(req.ParentDir, "key-"+id+".pem")
-			if err := os.WriteFile(keyPath, certificate.KeyBytes, 0o644); err != nil {
+			if err := os.WriteFile(keyPath, certificate.KeyBytes, defaultFileMode); err != nil {
 				return nil, fmt.Errorf("write key to file: %w", err)
 			}
 			certificate.KeyPath = keyPath
