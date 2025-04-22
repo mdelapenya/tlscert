@@ -90,7 +90,7 @@ func TestSelfSigned(t *testing.T) {
 		}
 		// the IP from the host comes after the IPs from the IPAddresses option
 		if c.IPAddresses[2].String() != ip {
-			t.Fatalf("expected IP address to be %s, got %s\n", ip, c.IPAddresses[0].String())
+			t.Fatalf("expected IP address to be %s, got %s\n", ip, c.IPAddresses[2].String())
 		}
 	})
 
@@ -324,7 +324,7 @@ func TestSelfSignedE(t *testing.T) {
 		}
 		// the IP from the host comes after the IPs from the IPAddresses option
 		if c.IPAddresses[2].String() != ip {
-			t.Fatalf("expected IP address to be %s, got %s\n", ip, c.IPAddresses[0].String())
+			t.Fatalf("expected IP address to be %s, got %s\n", ip, c.IPAddresses[2].String())
 		}
 	})
 
