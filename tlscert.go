@@ -292,7 +292,7 @@ func SelfSignedFromRequestE(req Request) (*Certificate, error) {
 	return certificate, nil
 }
 
-// santiiseName returns a sanitised version of the name, replacing spaces with underscores.
+// sanitiseName returns a sanitised version of the name, replacing spaces with underscores.
 func sanitiseName(name string) string {
 	if name == "" {
 		name = time.Now().Format("2006-01-02T15:04:05")
