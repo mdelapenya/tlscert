@@ -1,6 +1,7 @@
 package tlscert_test
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -55,7 +56,7 @@ func ExampleSelfSigned() {
 	})
 
 	go func() {
-		if err := server.ListenAndServeTLS(cert.CertPath, cert.KeyPath); err != nil {
+		if err := server.ListenAndServeTLS(cert.CertPath, cert.KeyPath); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Printf("Failed to start server: %v", err)
 		}
 	}()
@@ -138,7 +139,7 @@ func ExampleSelfSignedE() {
 	})
 
 	go func() {
-		if err := server.ListenAndServeTLS(cert.CertPath, cert.KeyPath); err != nil {
+		if err := server.ListenAndServeTLS(cert.CertPath, cert.KeyPath); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Printf("Failed to start server: %v", err)
 		}
 	}()
