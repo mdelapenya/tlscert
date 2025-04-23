@@ -16,7 +16,8 @@ func ExampleSelfSigned() {
 	defer os.RemoveAll(certsDir)
 
 	if err := os.MkdirAll(certsDir, 0o755); err != nil {
-		log.Fatal(err) // nolint: gocritic
+		log.Println(err)
+		return
 	}
 
 	// Generate a certificate for localhost and save it to disk.
@@ -26,7 +27,8 @@ func ExampleSelfSigned() {
 		ParentDir: certsDir,
 	})
 	if caCert == nil {
-		log.Fatal("Failed to generate CA certificate")
+		log.Println("Failed to generate CA certificate")
+		return
 	}
 
 	cert := tlscert.SelfSignedFromRequest(tlscert.Request{
@@ -36,7 +38,8 @@ func ExampleSelfSigned() {
 		ParentDir: certsDir,
 	})
 	if cert == nil {
-		log.Fatal("Failed to generate certificate")
+		log.Println("Failed to generate certificate")
+		return
 	}
 
 	// create an http server that uses the generated certificate
@@ -55,7 +58,9 @@ func ExampleSelfSigned() {
 	})
 
 	go func() {
-		_ = server.ListenAndServeTLS(cert.CertPath, cert.KeyPath)
+		if err := server.ListenAndServeTLS(cert.CertPath, cert.KeyPath); err != nil {
+			log.Printf("Failed to start server: %v", err)
+		}
 	}()
 	defer server.Close()
 
@@ -66,13 +71,15 @@ func ExampleSelfSigned() {
 	client := &http.Client{Transport: cert.Transport()}
 	resp, err := client.Get(url)
 	if err != nil {
-		log.Fatalf("Failed to get response: %v", err)
+		log.Printf("Failed to get response: %v", err)
+		return
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Fatalf("Failed to read response body: %v", err)
+		log.Printf("Failed to read response body: %v", err)
+		return
 	}
 
 	fmt.Println(string(body))
@@ -87,7 +94,8 @@ func ExampleSelfSignedE() {
 	defer os.RemoveAll(certsDir)
 
 	if err := os.MkdirAll(certsDir, 0o755); err != nil {
-		log.Fatal(err) // nolint: gocritic
+		log.Println(err)
+		return
 	}
 
 	// Generate a certificate for localhost and save it to disk.
@@ -97,10 +105,12 @@ func ExampleSelfSignedE() {
 		ParentDir: certsDir,
 	})
 	if err != nil {
-		log.Fatal("Failed to generate CA certificate")
+		log.Println("Failed to generate CA certificate")
+		return
 	}
 	if caCert == nil {
-		log.Fatal("Failed to generate CA certificate")
+		log.Println("Failed to generate CA certificate")
+		return
 	}
 
 	cert, err := tlscert.SelfSignedFromRequestE(tlscert.Request{
@@ -110,10 +120,12 @@ func ExampleSelfSignedE() {
 		ParentDir: certsDir,
 	})
 	if err != nil {
-		log.Fatal("Failed to generate certificate")
+		log.Println("Failed to generate certificate")
+		return
 	}
 	if cert == nil {
-		log.Fatal("Failed to generate certificate")
+		log.Println("Failed to generate certificate")
+		return
 	}
 
 	// create an http server that uses the generated certificate
@@ -132,7 +144,9 @@ func ExampleSelfSignedE() {
 	})
 
 	go func() {
-		_ = server.ListenAndServeTLS(cert.CertPath, cert.KeyPath)
+		if err := server.ListenAndServeTLS(cert.CertPath, cert.KeyPath); err != nil {
+			log.Printf("Failed to start server: %v", err)
+		}
 	}()
 	defer server.Close()
 
@@ -143,13 +157,15 @@ func ExampleSelfSignedE() {
 	client := &http.Client{Transport: cert.Transport()}
 	resp, err := client.Get(url)
 	if err != nil {
-		log.Fatalf("Failed to get response: %v", err)
+		log.Printf("Failed to get response: %v", err)
+		return
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Fatalf("Failed to read response body: %v", err)
+		log.Printf("Failed to read response body: %v", err)
+		return
 	}
 
 	fmt.Println(string(body))
