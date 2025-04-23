@@ -1,3 +1,3 @@
 module github.com/mdelapenya/tlscert
 
-go 1.21
+go 1.23
