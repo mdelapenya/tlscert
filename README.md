@@ -93,10 +93,8 @@ func ExampleSelfSigned() {
 
 	server.Handler = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "text/plain")
-		_, err := w.Write([]byte("TLS works!\n"))
-		if err != nil {
-			log.Printf("Failed to write response: %v", err)
-		}
+		//nolint:errcheck
+		w.Write([]byte("TLS works!\n"))
 	})
 
 	go func() {
@@ -183,10 +181,8 @@ func ExampleSelfSignedE() {
 
 	server.Handler = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "text/plain")
-		_, err := w.Write([]byte("TLS works!\n"))
-		if err != nil {
-			log.Printf("Failed to write response: %v", err)
-		}
+		//nolint:errcheck
+		w.Write([]byte("TLS works!\n"))
 	})
 
 	go func() {
